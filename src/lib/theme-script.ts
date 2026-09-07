@@ -31,8 +31,13 @@ export function isThemeName(value: string | null | undefined): value is ThemeNam
   return typeof value === "string" && (THEMES as readonly string[]).includes(value);
 }
 
-// Self-contained (inlined into HTML), so the theme list is duplicated inside
-// the string on purpose.
+/**
+ * Pre-paint theme script, inlined into HTML by layout.tsx.
+ * Runs before first paint to set `data-theme` + theme-color meta from
+ * localStorage (no wrong-theme flash). Self-contained with no imports so it
+ * can run under CSP via the per-request nonce set in src/proxy.ts — the
+ * theme list is duplicated inside the string on purpose.
+ */
 export const themeScript = `
 (function() {
   var THEMES = ["espresso", "caramel", "terminal", "midnight", "latte", "cream", "blush", "azure"];
