@@ -354,7 +354,7 @@ async function main() {
       id: `${owner}/${name}`,
       name,
       owner,
-      description: app.summary ?? "",
+      description: repoData.description || app.summary || "",
       url: repoData.html_url,
       language: repoData.language ?? "",
       stars: repoData.stargazers_count,

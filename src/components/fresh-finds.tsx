@@ -6,20 +6,7 @@ import Link from "next/link";
 import type { Project, Genre, GenreId } from "@/lib/data";
 import { useLocalWatchlist, toggleLocalWatchlist } from "@/lib/local-watchlist";
 import { FilterChipGroup } from "./filter-chip";
-
-function daysSince(iso: string | null): number | null {
-  if (!iso) return null;
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return null;
-  return Math.max(0, Math.floor((Date.now() - t) / 86400000));
-}
-
-function scoreColor(score: number): string {
-  const s = score * 10;
-  if (s >= 7) return "var(--color-signal-green)";
-  if (s >= 4) return "var(--color-signal-amber)";
-  return "var(--color-signal-red)";
-}
+import { daysSince, scoreColor, GitHubIcon } from "@/lib/utils";
 
 export function FreshFinds({ projects, genres }: { projects: Project[]; genres: Genre[] }) {
   const genreMap = new Map<GenreId, string>(genres.map((g) => [g.id as GenreId, g.label]));
@@ -115,17 +102,9 @@ export function FreshFinds({ projects, genres }: { projects: Project[]; genres: 
             <p className="font-mono text-[10px] tracking-widest uppercase mb-2" style={{ color: "var(--color-text-dim)" }}>
               No fresh finds yet
             </p>
-            <p className="text-sm max-w-md mx-auto leading-relaxed mb-4" style={{ color: "var(--color-text-muted)" }}>
-              Fresh Finds shows open-source apps launched in the last 9 months that
-              score well on activity and freshness. The catalog is updated periodically.
+            <p className="text-sm max-w-md mx-auto leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+              The catalog is updated periodically. Check back soon for new arrivals.
             </p>
-            <p className="text-sm max-w-md mx-auto leading-relaxed mb-4" style={{ color: "var(--color-text-muted)" }}>
-              If you&apos;re seeing this, the data may need refreshing. Run the update script
-              to pull the latest from F-Droid and GitHub.
-            </p>
-            <code className="font-mono text-xs px-2 py-1 rounded" style={{ backgroundColor: "var(--color-bg)", color: "var(--color-accent)", border: "1px solid var(--color-border)" }}>
-              node scripts/refresh-data.mjs
-            </code>
           </div>
         ) : (
           <>
@@ -308,7 +287,7 @@ function FreshCard({
 
       {/* Footer */}
       <div
-        className="flex items-center justify-between gap-2 pt-3 border-t flex-wrap"
+        className="flex flex-col items-stretch gap-3 pt-3 border-t sm:flex-row sm:items-center sm:justify-between"
         style={{ borderColor: "var(--color-ruled)" }}
       >
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
@@ -334,7 +313,7 @@ function FreshCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           {isFresh && (
             <span
               className="badge-pulse font-mono text-[11px] px-1.5 py-0.5"
@@ -355,9 +334,7 @@ function FreshCard({
               backgroundColor: "var(--color-accent-dim)",
             }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.54 2.87 8.39 6.84 9.75.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.36-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.27 2.75 1.05.8-.23 1.65-.34 2.5-.34s1.7.11 2.5.34c1.91-1.32 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.04 10.04 0 0 0 22 12.25C22 6.58 17.52 2 12 2z" />
-            </svg>
+            <GitHubIcon size={12} />
           </a>
           <button
             onClick={onToggleTrack}

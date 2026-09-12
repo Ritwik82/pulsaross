@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import { themeScript } from "@/lib/theme-script";
 import { MotionProvider } from "@/components/motion-provider";
+import { WatchlistRail } from "@/components/watchlist-rail";
+import { getProjects } from "@/lib/data";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -53,6 +55,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const projects = getProjects().projects;
+
   return (
     <html
       lang="en"
@@ -62,12 +66,16 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content="#0a0e13" />
+        <link rel="alternate" type="application/rss+xml" href="/api/feed" title="Pulsaross RSS Feed" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col isolate">
         <a href="#main-content" className="skip-link">Skip to main content</a>
         <div className="grid-overlay" aria-hidden="true" />
-        <MotionProvider>{children}</MotionProvider>
+        <MotionProvider>
+          {children}
+          <WatchlistRail projects={projects} />
+        </MotionProvider>
       </body>
     </html>
   );

@@ -8,6 +8,9 @@ const light = process.argv.includes("--light");
 const projects = JSON.parse(readFileSync("data/projects.json", "utf-8"));
 const firstProject = projects.projects[0];
 const projectUrl = `${url}/project/${encodeURIComponent(firstProject.id)}`;
+const catalogUrl = `${url}/catalog`;
+const watchlistUrl = `${url}/watchlist`;
+const methodologyUrl = `${url}/methodology`;
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
@@ -73,8 +76,11 @@ async function keyboardCheck(label) {
   console.log(`skip-link chain: ${firstTab}`);
 }
 
-await auditPage(url, "Home");
-await auditPage(projectUrl, "Project detail");
+await auditPage(url, "Home (Overview)");
+await auditPage(catalogUrl, "Catalog Workbench");
+await auditPage(watchlistUrl, "Watchlist Management");
+await auditPage(projectUrl, "Project Detail Lab");
+await auditPage(methodologyUrl, "Scoring Methodology & API");
 await keyboardCheck("Home");
 
 await browser.close();
@@ -82,4 +88,4 @@ if (failed) {
   console.log("\nRESULT: FAIL — axe violations found");
   process.exit(1);
 }
-console.log("\nRESULT: PASS — no WCAG 2.x violations");
+console.log("\nRESULT: PASS — no WCAG 2.x violations across all routes");

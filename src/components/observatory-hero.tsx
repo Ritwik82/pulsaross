@@ -1,5 +1,6 @@
 import type { Project } from "@/lib/data";
-import { RelativeTime } from "@/components/relative-time";
+import Link from "next/link";
+import { StatStrip } from "@/components/stat-strip";
 
 interface ObservatoryHeroProps {
   projects: Project[];
@@ -8,23 +9,15 @@ interface ObservatoryHeroProps {
 
 export function ObservatoryHero({ projects, generatedAt }: ObservatoryHeroProps) {
   const total = projects.length;
-  const activeCount = projects.filter((p) => (p.score * 10) >= 6).length;
-  const activePct = total > 0 ? Math.round((activeCount / total) * 100) : 0;
-  
-  const modernSdkCount = projects.filter((p) => p.target_sdk && p.target_sdk >= 34).length;
-  const modernSdkPct = total > 0 ? Math.round((modernSdkCount / total) * 100) : 0;
-
-  const avgScore = total > 0
-    ? (projects.reduce((sum, p) => sum + p.score, 0) / total * 10).toFixed(1)
-    : "0.0";
 
   return (
-    <section className="relative px-4 pt-6 pb-10 border-b border-[var(--color-border)] overflow-hidden">
+    <section className="relative px-4 pt-6 pb-8 border-b border-[var(--color-border)] overflow-hidden">
       {/* Precision grid backdrop overlay */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage: "linear-gradient(to right, var(--color-text) 1px, transparent 1px), linear-gradient(to bottom, var(--color-text) 1px, transparent 1px)",
+          backgroundImage:
+            "linear-gradient(to right, var(--color-text) 1px, transparent 1px), linear-gradient(to bottom, var(--color-text) 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
       />
@@ -32,7 +25,7 @@ export function ObservatoryHero({ projects, generatedAt }: ObservatoryHeroProps)
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column — Value Prop & Jump Action */}
-          <div className="lg:col-span-7 flex flex-col items-start gap-4">
+          <div className="lg:col-span-6 flex flex-col items-start gap-4">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-[var(--color-accent-border)] bg-[var(--color-accent-dim)]">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-signal-green)] opacity-75" />
@@ -48,95 +41,35 @@ export function ObservatoryHero({ projects, generatedAt }: ObservatoryHeroProps)
               <span className="text-[var(--color-accent)]">Health Observatory</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-[54ch] leading-relaxed">
-              Automated telemetry on maintenance cadence, abandonment risk, and Android target SDKs across 500+ community packages.
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] max-w-[52ch] leading-relaxed">
+              Automated telemetry on maintenance cadence, abandonment risk, and target SDK security across 500+ Android packages. Never install abandonware again.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href="#fresh-finds"
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-[var(--color-accent)] text-[var(--color-bg)] transition-all hover:opacity-90 active:scale-[0.98] shadow-sm"
+              <Link
+                href="/catalog"
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-[var(--color-accent)] text-[var(--color-bg)] transition-all hover:opacity-90 active:scale-[0.98] shadow-sm font-mono tracking-wider uppercase"
               >
-                Inspect Fresh Finds →
-              </a>
-              <a
-                href="#projects"
-                className="px-4 py-2 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-accent-border)] hover:bg-[var(--color-surface)] transition-all active:scale-[0.98]"
+                Explore Catalog ({total}) →
+              </Link>
+              <Link
+                href="/watchlist"
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-accent-border)] hover:bg-[var(--color-surface)] transition-all active:scale-[0.98] font-mono tracking-wider uppercase"
               >
-                Explore Full Archive ({total})
-              </a>
-              <a
-                href="#methodology"
-                className="px-3 py-2 text-xs text-[var(--color-text-dim)] hover:text-[var(--color-text)] transition-colors underline underline-offset-4 decoration-[var(--color-border)]"
+                Watchlist Hub
+              </Link>
+              <Link
+                href="/methodology"
+                className="px-3 py-2 text-xs text-[var(--color-text-dim)] hover:text-[var(--color-text)] transition-colors underline underline-offset-4 decoration-[var(--color-border)] font-mono"
               >
-                Methodology
-              </a>
+                Methodology &amp; API
+              </Link>
             </div>
           </div>
 
           {/* Right Column — Telemetry HUD Pod */}
-          <div className="lg:col-span-5">
-            <div 
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 relative overflow-hidden"
-              style={{
-                boxShadow: "0 10px 30px -10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
-              }}
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)] mb-4">
-                <span className="font-mono text-xs text-[var(--color-text-muted)] font-medium">
-                  SYSTEM TELEMETRY
-                </span>
-                <span className="font-mono text-[10px] text-[var(--color-text-dim)]">
-                  BATCH: <RelativeTime iso={generatedAt} />
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-                  <span className="block text-[11px] text-[var(--color-text-muted)]">Tracked Catalog</span>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="font-mono text-2xl font-bold text-[var(--color-text)]">{total}</span>
-                    <span className="text-[10px] text-[var(--color-text-dim)]">apps</span>
-                  </div>
-                  <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
-                    <div className="bg-[var(--color-accent)] h-full w-full" />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-                  <span className="block text-[11px] text-[var(--color-text-muted)]">Health Index</span>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="font-mono text-2xl font-bold text-[var(--color-signal-green)]">{avgScore}</span>
-                    <span className="text-[10px] text-[var(--color-text-dim)]">/ 10</span>
-                  </div>
-                  <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
-                    <div className="bg-[var(--color-signal-green)] h-full" style={{ width: `${Number(avgScore) * 10}%` }} />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-                  <span className="block text-[11px] text-[var(--color-text-muted)]">Active Rate</span>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="font-mono text-2xl font-bold text-[var(--color-signal-blue)]">{activePct}%</span>
-                    <span className="text-[10px] text-[var(--color-text-dim)]">healthy</span>
-                  </div>
-                  <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
-                    <div className="bg-[var(--color-signal-blue)] h-full" style={{ width: `${activePct}%` }} />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-                  <span className="block text-[11px] text-[var(--color-text-muted)]">Android 14+ Ready</span>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="font-mono text-2xl font-bold text-[var(--color-signal-purple)]">{modernSdkPct}%</span>
-                    <span className="text-[10px] text-[var(--color-text-dim)]">SDK ≥34</span>
-                  </div>
-                  <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
-                    <div className="bg-[var(--color-signal-purple)] h-full" style={{ width: `${modernSdkPct}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="lg:col-span-6">
+            <StatStrip projects={projects} generatedAt={generatedAt} />
           </div>
         </div>
       </div>

@@ -80,6 +80,17 @@ export function CatalogSearch({
           }}
           onFocus={() => setFocused(true)}
           onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (listboxOpen && activeIndex >= 0 && results[activeIndex]) {
+                go(results[activeIndex].id);
+              } else if (query.trim()) {
+                onNavigate?.();
+                setFocused(false);
+                router.push(`/catalog?q=${encodeURIComponent(query.trim())}`);
+              }
+              return;
+            }
             if (!listboxOpen) return;
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -87,9 +98,6 @@ export function CatalogSearch({
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
               if (results.length > 0) setActiveIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
-            } else if (e.key === "Enter" && activeIndex >= 0 && results[activeIndex]) {
-              e.preventDefault();
-              go(results[activeIndex].id);
             }
           }}
           placeholder="Search"

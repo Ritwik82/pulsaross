@@ -5,6 +5,7 @@ import {
   toggleLocalWatchlist,
   useLocalWatchlist,
 } from "@/lib/local-watchlist";
+import { daysSince } from "@/lib/utils";
 
 const TOKEN_KEY = "pulsaross-github-token";
 
@@ -47,12 +48,8 @@ interface RepoInfo {
   default_branch: string;
 }
 
-function daysSince(iso: string): number {
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-}
-
 function healthScore(r: RepoInfo): number {
-  const d = daysSince(r.pushed_at);
+  const d = daysSince(r.pushed_at) ?? 9999;
   const recency = d <= 7 ? 1 : d <= 30 ? 0.8 : d <= 90 ? 0.6 : d <= 180 ? 0.4 : d <= 270 ? 0.2 : 0.05;
   const stars = Math.min(r.stargazers_count / 5000, 1);
   const issues = r.open_issues_count === 0 ? 1 : Math.max(0, 1 - r.open_issues_count / 200);
@@ -235,7 +232,7 @@ export function RepoLookup() {
             <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono mb-3" style={{ color: "var(--color-text-dim)" }}>
               {repo.language && <span>● {repo.language}</span>}
               <span>★ {repo.stargazers_count.toLocaleString()}</span>
-              <span>{daysSince(repo.pushed_at)}d ago</span>
+              <span>{daysSince(repo.pushed_at) ?? 0}d ago</span>
               {repo.archived && <span style={{ color: "var(--color-signal-red)" }}>ARCHIVED</span>}
               {repo.license && <span>{repo.license.spdx_id}</span>}
             </div>
