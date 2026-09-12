@@ -19,13 +19,13 @@ export function FreshFindsSnippet({ projects, genres }: FreshFindsSnippetProps) 
   const topFresh = [...projects].sort((a, b) => b.score - a.score).slice(0, 3);
 
   return (
-    <section className="space-y-4">
+    <section id="fresh-finds" aria-label="Fresh Finds" className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-xs text-[var(--color-signal-blue)] font-bold">◈</span>
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-[var(--color-text)]">
-              Fresh Finds Radar (Launched ≤9 Months)
+              New Apps · Launched in the last 9 months
             </h3>
           </div>
           <p className="text-xs text-[var(--color-text-muted)] mt-0.5">

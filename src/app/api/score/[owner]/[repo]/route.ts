@@ -44,8 +44,10 @@ export async function GET(
     return err(400, "invalid owner or repo", "INVALID_PARAM", id);
   }
   const data = getProjects();
+  const ownerLower = owner.toLowerCase();
+  const repoLower = repo.toLowerCase();
   const project = data.projects.find(
-    (p) => p.owner === owner && p.name === repo
+    (p) => p.owner.toLowerCase() === ownerLower && p.name.toLowerCase() === repoLower
   );
   if (!project) {
     return err(404, "not found", "NOT_FOUND", id);

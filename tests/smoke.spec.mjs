@@ -16,8 +16,8 @@ test("home page renders overview telemetry and heat grid", async ({ page }) => {
   expect(body).toContain("Open-source Android");
   expect(body).toContain("Health Observatory");
   expect(body).toContain("System Telemetry");
-  expect(body).toContain("Bivariate Health Matrix");
-  expect(body).toContain("Fresh Finds Radar");
+  expect(body).toContain("Momentum Leaders");
+  expect(body).toContain("New Apps");
 
   const theme = await page.evaluate(() => document.documentElement.dataset.theme);
   expect(theme).toBe("terminal");
@@ -138,4 +138,16 @@ test("track from snippet adds to watchlist", async ({ page }) => {
     const stopBtn = page.getByRole("button", { name: `Stop tracking ${name}` });
     await expect(stopBtn).toBeVisible();
   }
+});
+
+test("api score endpoint returns canonical score for catalog projects", async ({ request }) => {
+  const data = JSON.parse(
+    readFileSync(join(process.cwd(), "data", "projects.json"), "utf-8")
+  );
+  const p = data.projects[0];
+  const res = await request.get(`/api/score/${p.owner}/${p.name}`);
+  expect(res.ok()).toBeTruthy();
+  const json = await res.json();
+  expect(json.id).toBe(p.id);
+  expect(json.score).toBe(p.score);
 });

@@ -147,11 +147,11 @@ export function NavBar({ projects }: { projects: Project[] }) {
             {/* Watchlist Rail Trigger Button with Badge */}
             <button
               onClick={openRail}
-              aria-label="Toggle persistent watchlist rail (Cmd+B)"
+              aria-label="Open watchlist panel (Cmd+B)"
               className="relative inline-flex items-center gap-1.5 font-mono text-[10px] tracking-wider px-2 py-1 rounded border border-[var(--color-border)] text-[var(--color-text)] bg-[var(--color-surface)] hover:border-[var(--color-accent-border)] hover:text-[var(--color-accent)] transition-colors focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
             >
               <span>⚡</span>
-              <span className="hidden sm:inline">RAIL</span>
+              <span className="hidden sm:inline">WATCHLIST</span>
               {local.length > 0 && (
                 <span className="font-mono text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--color-accent)] text-[var(--color-bg)]">
                   {local.length}

@@ -206,13 +206,18 @@ export function DiagnosticLab({
               </a>
             </div>
 
-            <a
-              href={`obtainium://add/${project.url}`}
-              className="w-full font-mono text-[10px] font-semibold tracking-wider uppercase px-3 py-2 rounded border border-[var(--color-accent-border)] text-[var(--color-accent)] bg-[var(--color-accent-dim)] hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1.5"
-              title="Open & track in Obtainium Android app"
-            >
-              <span>Track in Obtainium 📲</span>
-            </a>
+            <div className="space-y-1">
+              <a
+                href={`obtainium://add/${project.url}`}
+                className="w-full font-mono text-[10px] font-semibold tracking-wider uppercase px-3 py-2 rounded border border-[var(--color-accent-border)] text-[var(--color-accent)] bg-[var(--color-accent-dim)] hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1.5"
+                title="Open & track in Obtainium Android app"
+              >
+                <span>Track in Obtainium 📲</span>
+              </a>
+              <p className="font-mono text-[9px] text-center text-[var(--color-text-dim)]">
+                (requires Obtainium installed on Android)
+              </p>
+            </div>
 
             <CopyBadgeButton projectUrl={project.url} repoId={project.id} />
           </div>

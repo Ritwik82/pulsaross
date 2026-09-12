@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useCallback, useSyncExternalStore } from "react";
+import Link from "next/link";
 import {
   toggleLocalWatchlist,
   useLocalWatchlist,
 } from "@/lib/local-watchlist";
+import type { GenreId } from "@/lib/data";
 import { daysSince } from "@/lib/utils";
 
 const TOKEN_KEY = "pulsaross-github-token";
@@ -48,6 +50,13 @@ interface RepoInfo {
   default_branch: string;
 }
 
+interface CatalogMatch {
+  id: string;
+  name: string;
+  score: number;
+  genre: GenreId;
+}
+
 function healthScore(r: RepoInfo): number {
   const d = daysSince(r.pushed_at) ?? 9999;
   const recency = d <= 7 ? 1 : d <= 30 ? 0.8 : d <= 90 ? 0.6 : d <= 180 ? 0.4 : d <= 270 ? 0.2 : 0.05;
@@ -73,6 +82,7 @@ export function RepoLookup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [repo, setRepo] = useState<RepoInfo | null>(null);
+  const [catalogMatch, setCatalogMatch] = useState<CatalogMatch | null>(null);
   const local = useLocalWatchlist();
   const tracked = repo ? local.some((l) => l.repo === repo.full_name || l.id === repo.full_name) : false;
 
@@ -85,6 +95,7 @@ export function RepoLookup() {
     setError(null);
     setLoading(true);
     setRepo(null);
+    setCatalogMatch(null);
     try {
       const token = currentToken.trim();
       writeToken(token);
@@ -99,7 +110,30 @@ export function RepoLookup() {
         }
         throw new Error(`GitHub ${res.status}`);
       }
-      setRepo(await res.json());
+      const repoData: RepoInfo = await res.json();
+      setRepo(repoData);
+
+      // Cross-reference with canonical catalog for score consistency
+      try {
+        const [o, r] = repoData.full_name.split("/");
+        if (o && r) {
+          const catRes = await fetch(`/api/score/${encodeURIComponent(o)}/${encodeURIComponent(r)}`);
+          if (catRes.ok) {
+            const p = await catRes.json();
+            const projectData = p.data ?? p;
+            if (projectData && typeof projectData.score === "number") {
+              setCatalogMatch({
+                id: projectData.id,
+                name: projectData.name,
+                score: projectData.score,
+                genre: projectData.genre ?? "other",
+              });
+            }
+          }
+        }
+      } catch {
+        // Silently fallback to ad-hoc estimate
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Lookup failed");
     } finally {
@@ -110,16 +144,16 @@ export function RepoLookup() {
   const toggleTrack = () => {
     if (!repo) return;
     toggleLocalWatchlist({
-      id: repo.full_name,
-      name: repo.full_name.split("/")[1],
+      id: catalogMatch?.id ?? repo.full_name,
+      name: catalogMatch?.name ?? repo.full_name.split("/")[1],
       repo: repo.full_name,
-      genre: "other",
+      genre: catalogMatch?.genre ?? "other",
       source: "local",
     });
   };
 
-  const score = repo ? healthScore(repo) : 0;
-  const health = repo ? healthLabel(score) : null;
+  const finalScore = catalogMatch ? catalogMatch.score : repo ? healthScore(repo) : 0;
+  const health = repo ? healthLabel(finalScore) : null;
 
   return (
     <div className="w-full">
@@ -214,17 +248,27 @@ export function RepoLookup() {
           <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--color-ruled)" }}>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="min-w-0">
-                <p className="font-mono text-[10px] tracking-wider" style={{ color: "var(--color-text-dim)" }}>
-                  {repo.full_name}
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-mono text-[10px] tracking-wider" style={{ color: "var(--color-text-dim)" }}>
+                    {repo.full_name}
+                  </p>
+                  {catalogMatch && (
+                    <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/60 border border-emerald-700/60 text-emerald-400">
+                      ✓ Catalog Specimen
+                    </span>
+                  )}
+                </div>
                 <p className="font-mono text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>
                   {repo.description || "No description"}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-2xl font-bold font-mono accent-text">{(score * 10).toFixed(1)}</p>
+                <p className="text-2xl font-bold font-mono accent-text">{(finalScore * 10).toFixed(1)}</p>
                 <p className="font-mono text-[9px] tracking-wider" style={{ color: health.color }}>
                   {health.label}
+                </p>
+                <p className="font-mono text-[8px] text-[var(--color-text-dim)] mt-0.5">
+                  {catalogMatch ? "6-Signal Catalog Engine" : "Quick 5-factor estimate"}
                 </p>
               </div>
             </div>
@@ -237,7 +281,7 @@ export function RepoLookup() {
               {repo.license && <span>{repo.license.spdx_id}</span>}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={toggleTrack}
                 className="font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 border transition-colors hover:opacity-80"
@@ -249,6 +293,19 @@ export function RepoLookup() {
               >
                 {tracked ? "TRACKED" : "TRACK"}
               </button>
+              {catalogMatch && (
+                <Link
+                  href={`/project/${catalogMatch.id}`}
+                  className="font-mono text-[10px] tracking-widest uppercase px-3 py-1.5 border transition-colors hover:opacity-80 rounded"
+                  style={{
+                    color: "var(--color-accent)",
+                    borderColor: "var(--color-accent-border)",
+                    backgroundColor: "var(--color-accent-dim)",
+                  }}
+                >
+                  Diagnostic Dossier →
+                </Link>
+              )}
               <a
                 href={repo.html_url}
                 target="_blank"

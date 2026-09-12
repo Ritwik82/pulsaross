@@ -565,8 +565,8 @@ export function WatchlistPanel({ apps, genres, projects }: { apps: WatchlistApp[
                     >
                       Import Obtainium export
                     </button>
-                    <a
-                      href="#fresh-finds"
+                    <Link
+                      href="/#fresh-finds"
                       className="font-mono text-[10px] tracking-wider px-3.5 py-2 rounded border transition-all hover:opacity-90 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
                       style={{
                         color: "var(--color-text)",
@@ -575,7 +575,7 @@ export function WatchlistPanel({ apps, genres, projects }: { apps: WatchlistApp[
                       }}
                     >
                       Browse Fresh Finds
-                    </a>
+                    </Link>
                   </div>
                 </div>
               )}

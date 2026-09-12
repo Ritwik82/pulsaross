@@ -11,8 +11,8 @@ export function StatStrip({ projects, generatedAt }: StatStripProps) {
   const activeCount = projects.filter((p) => p.score * 10 >= 6).length;
   const activePct = total > 0 ? Math.round((activeCount / total) * 100) : 0;
 
-  const modernSdkCount = projects.filter((p) => p.target_sdk && p.target_sdk >= 34).length;
-  const modernSdkPct = total > 0 ? Math.round((modernSdkCount / total) * 100) : 0;
+  const fossCount = projects.filter((p) => p.license_name || p.score_breakdown?.license === 1).length;
+  const fossPct = total > 0 ? Math.round((fossCount / total) * 100) : 0;
 
   const avgScore =
     total > 0
@@ -87,16 +87,16 @@ export function StatStrip({ projects, generatedAt }: StatStripProps) {
         {/* Metric 4 */}
         <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
           <span className="block font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
-            Android 14+ Ready
+            FOSS Verified
           </span>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-[var(--color-signal-purple)]">{modernSdkPct}%</span>
-            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">SDK ≥34</span>
+            <span className="font-mono text-2xl font-bold text-[var(--color-signal-purple)]">{fossPct}%</span>
+            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">licensed</span>
           </div>
           <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
             <div
               className="bg-[var(--color-signal-purple)] h-full"
-              style={{ width: `${modernSdkPct}%` }}
+              style={{ width: `${fossPct}%` }}
             />
           </div>
         </div>
