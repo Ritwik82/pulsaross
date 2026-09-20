@@ -38,31 +38,31 @@ export function StatStrip({ projects, generatedAt }: StatStripProps) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {/* Metric 1 */}
-        <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-          <span className="block font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
+        <div className="p-3.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40 flex flex-col justify-between">
+          <span className="font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
             Tracked Catalog
           </span>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-[var(--color-text)]">{total}</span>
-            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">apps</span>
+          <div className="mt-2 flex items-baseline justify-between gap-1.5">
+            <span className="font-mono text-2xl font-bold text-[var(--color-text)] tracking-tight">{total}</span>
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)] uppercase">apps</span>
           </div>
-          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
+          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2.5 overflow-hidden">
             <div className="bg-[var(--color-accent)] h-full w-full" />
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-          <span className="block font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
+        <div className="p-3.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40 flex flex-col justify-between">
+          <span className="font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
             Health Index
           </span>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-[var(--color-signal-green)]">{avgScore}</span>
-            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">/ 10</span>
+          <div className="mt-2 flex items-baseline justify-between gap-1.5">
+            <span className="font-mono text-2xl font-bold text-[var(--color-signal-green)] tracking-tight">{avgScore}</span>
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)] uppercase">/ 10</span>
           </div>
-          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
+          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2.5 overflow-hidden">
             <div
               className="bg-[var(--color-signal-green)] h-full"
               style={{ width: `${Number(avgScore) * 10}%` }}
@@ -71,29 +71,29 @@ export function StatStrip({ projects, generatedAt }: StatStripProps) {
         </div>
 
         {/* Metric 3 */}
-        <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-          <span className="block font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
+        <div className="p-3.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40 flex flex-col justify-between">
+          <span className="font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
             Active Rate
           </span>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-[var(--color-signal-blue)]">{activePct}%</span>
-            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">maintained</span>
+          <div className="mt-2 flex items-baseline justify-between gap-1.5">
+            <span className="font-mono text-2xl font-bold text-[var(--color-signal-blue)] tracking-tight">{activePct}%</span>
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)] uppercase">active</span>
           </div>
-          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
+          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2.5 overflow-hidden">
             <div className="bg-[var(--color-signal-blue)] h-full" style={{ width: `${activePct}%` }} />
           </div>
         </div>
 
         {/* Metric 4 */}
-        <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40">
-          <span className="block font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
+        <div className="p-3.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/40 flex flex-col justify-between">
+          <span className="font-mono text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">
             FOSS Verified
           </span>
-          <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-[var(--color-signal-purple)]">{fossPct}%</span>
-            <span className="font-mono text-[10px] text-[var(--color-text-dim)]">licensed</span>
+          <div className="mt-2 flex items-baseline justify-between gap-1.5">
+            <span className="font-mono text-2xl font-bold text-[var(--color-signal-purple)] tracking-tight">{fossPct}%</span>
+            <span className="font-mono text-[11px] text-[var(--color-text-dim)] uppercase">licensed</span>
           </div>
-          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2 overflow-hidden">
+          <div className="w-full bg-[var(--color-surface)] h-1 rounded-full mt-2.5 overflow-hidden">
             <div
               className="bg-[var(--color-signal-purple)] h-full"
               style={{ width: `${fossPct}%` }}
