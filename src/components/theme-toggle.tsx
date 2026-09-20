@@ -19,6 +19,8 @@ const THEME_LABELS: Record<ThemeName, string> = {
   cream: "Cream",
   blush: "Blush",
   azure: "Azure",
+  mint: "Mint",
+  "mint-dark": "Mint Dark",
 };
 
 // Swatch colors mirror each theme's accent token in globals.css.
@@ -31,6 +33,8 @@ const THEME_SWATCHES: Record<ThemeName, string> = {
   cream: "#8f501f",
   blush: "#a6534f",
   azure: "#2a5f9e",
+  mint: "#72e3ad",
+  "mint-dark": "#006239",
 };
 
 function subscribe(callback: () => void) {

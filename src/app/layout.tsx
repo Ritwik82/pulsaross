@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import { Outfit, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import { themeScript } from "@/lib/theme-script";
 import { MotionProvider } from "@/components/motion-provider";
 import { WatchlistRail } from "@/components/watchlist-rail";
 import { getProjects } from "@/lib/data";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const outfit = Outfit({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -62,7 +62,7 @@ export default function RootLayout({
       lang="en"
       data-theme="terminal"
       suppressHydrationWarning
-      className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${playfairDisplay.variable} h-full antialiased scroll-smooth`}
+      className={`${outfit.variable} ${jetbrainsMono.variable} ${playfairDisplay.variable} h-full antialiased scroll-smooth`}
     >
       <head>
         <meta name="theme-color" content="#0a0e13" />

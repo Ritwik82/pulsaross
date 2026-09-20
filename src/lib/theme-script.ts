@@ -3,8 +3,8 @@
 // The script runs pre-paint: no flash of the wrong theme, and the meta tag must
 // match the persisted theme, not OS preference (AGENTS.md known pattern).
 
-export const DARK_THEMES = ["espresso", "caramel", "terminal", "midnight"] as const;
-export const LIGHT_THEMES = ["latte", "cream", "blush", "azure"] as const;
+export const DARK_THEMES = ["espresso", "caramel", "terminal", "midnight", "mint-dark"] as const;
+export const LIGHT_THEMES = ["latte", "cream", "blush", "azure", "mint"] as const;
 
 export const THEMES = [...DARK_THEMES, ...LIGHT_THEMES] as const;
 
@@ -25,6 +25,8 @@ export const THEME_META_COLORS: Record<ThemeName, string> = {
   cream: "#f6eddd",
   blush: "#f2dfda",
   azure: "#d9e6f2",
+  mint: "#fcfcfc",
+  "mint-dark": "#121212",
 };
 
 export function isThemeName(value: string | null | undefined): value is ThemeName {
@@ -40,8 +42,8 @@ export function isThemeName(value: string | null | undefined): value is ThemeNam
  */
 export const themeScript = `
 (function() {
-  var THEMES = ["espresso", "caramel", "terminal", "midnight", "latte", "cream", "blush", "azure"];
-  var META = { espresso: "#1a1410", caramel: "#3a2a1a", terminal: "#0a0e13", midnight: "#12161d", latte: "#e6d9bf", cream: "#f6eddd", blush: "#f2dfda", azure: "#d9e6f2" };
+  var THEMES = ["espresso", "caramel", "terminal", "midnight", "mint-dark", "latte", "cream", "blush", "azure", "mint"];
+  var META = { espresso: "#1a1410", caramel: "#3a2a1a", terminal: "#0a0e13", midnight: "#12161d", "mint-dark": "#121212", latte: "#e6d9bf", cream: "#f6eddd", blush: "#f2dfda", azure: "#d9e6f2", mint: "#fcfcfc" };
   var t = localStorage.getItem('pulsaross-theme');
   if (THEMES.indexOf(t) === -1) t = "terminal";
   document.documentElement.dataset.theme = t;
