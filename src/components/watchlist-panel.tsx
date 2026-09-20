@@ -338,7 +338,7 @@ export function WatchlistPanel({ apps, genres, projects }: { apps: WatchlistApp[
   function shareStack() {
     if (allApps.length === 0) return;
     const repos = allApps.map((a) => a.repo ?? a.id).filter(Boolean);
-    const url = `${window.location.origin}/?stack=${encodeURIComponent(repos.join(","))}`;
+    const url = `${window.location.origin}/watchlist?stack=${encodeURIComponent(repos.join(","))}`;
     navigator.clipboard.writeText(url);
     setImportToast("Stack URL copied to clipboard! 📋");
     setImportToastError(false);

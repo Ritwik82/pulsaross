@@ -33,8 +33,8 @@ const THEME_SWATCHES: Record<ThemeName, string> = {
   cream: "#8f501f",
   blush: "#a6534f",
   azure: "#2a5f9e",
-  mint: "#72e3ad",
-  "mint-dark": "#006239",
+  mint: "#006239",
+  "mint-dark": "#4ade80",
 };
 
 function subscribe(callback: () => void) {

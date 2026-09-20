@@ -5,7 +5,7 @@ import { useState } from "react";
 export function CopyBadgeButton({ repoId }: { projectUrl?: string; repoId: string }) {
   const [copied, setCopied] = useState(false);
 
-  const badgeMarkdown = `[![PulsarOss Health](https://pulsaross.vercel.app/api/score/${repoId})](https://pulsaross.vercel.app/project/${repoId})`;
+  const badgeMarkdown = `[![PulsarOss Health](https://pulsaross.vercel.app/api/badge/${repoId})](https://pulsaross.vercel.app/project/${repoId})`;
 
   const copy = async () => {
     try {

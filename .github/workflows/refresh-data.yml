@@ -8,10 +8,10 @@ on:
 permissions:
   contents: write
 
-# ponytail: 12h cadence halves API load; single runner prevents overlap, cache keeps F-Droid 52MB off network
+# ponytail: 12h cadence halves API load; cancel-in-progress unblocks hung runs, cache keeps F-Droid 52MB off network
 concurrency:
   group: refresh-data
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   refresh:
@@ -44,7 +44,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/projects.json
-          git diff --staged --quiet || git commit -m "Refresh project data [skip ci]" && git push
+          git diff --staged --quiet || (git commit -m "Refresh project data [skip ci]" && git push)
 
       - name: Upload debug artifact on failure
         if: failure()

@@ -46,6 +46,40 @@ test("theme picker switches theme and persists across reload", async ({ page }) 
   expect(persisted).toBe("cream");
 });
 
+test("theme picker switches to Mint and Mint Dark with correct background", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+
+  // Switch to Mint (Light)
+  const trigger = page.getByRole("button", { name: "Change theme" });
+  await trigger.click();
+  await page.getByRole("button", { name: "LIGHT", exact: true }).click();
+  await page.getByRole("menuitemradio", { name: /^Mint$/ }).click();
+
+  let themeData = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    meta: document.querySelector('meta[name="theme-color"]')?.getAttribute("content"),
+    bg: getComputedStyle(document.body).backgroundColor,
+  }));
+  expect(themeData.theme).toBe("mint");
+  expect(themeData.meta).toBe("#fcfcfc");
+  expect(themeData.bg).toBe("rgb(252, 252, 252)");
+
+  // Switch to Mint Dark
+  await trigger.click();
+  await page.getByRole("button", { name: "DARK", exact: true }).click();
+  await page.getByRole("menuitemradio", { name: /Mint Dark/ }).click();
+
+  themeData = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    meta: document.querySelector('meta[name="theme-color"]')?.getAttribute("content"),
+    bg: getComputedStyle(document.body).backgroundColor,
+  }));
+  expect(themeData.theme).toBe("mint-dark");
+  expect(themeData.meta).toBe("#121212");
+  expect(themeData.bg).toBe("rgb(18, 18, 18)");
+});
+
 test("catalog workbench renders and filters data", async ({ page }) => {
   await page.goto("/catalog", { waitUntil: "networkidle" });
   await page.waitForTimeout(1000);
@@ -150,4 +184,18 @@ test("api score endpoint returns canonical score for catalog projects", async ({
   const json = await res.json();
   expect(json.id).toBe(p.id);
   expect(json.score).toBe(p.score);
+});
+
+test("api badge endpoint returns SVG badge with proper headers", async ({ request }) => {
+  const data = JSON.parse(
+    readFileSync(join(process.cwd(), "data", "projects.json"), "utf-8")
+  );
+  const p = data.projects[0];
+  const res = await request.get(`/api/badge/${p.owner}/${p.name}`);
+  expect(res.ok()).toBeTruthy();
+  expect(res.headers()["content-type"]).toContain("image/svg+xml");
+  const svg = await res.text();
+  expect(svg).toContain("<svg");
+  expect(svg).toContain("pulsaross");
+  expect(svg).toContain(`${(p.score * 10).toFixed(1)}/10`);
 });
