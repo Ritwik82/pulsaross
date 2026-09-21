@@ -35,5 +35,5 @@ export async function GET() {
       },
     },
   };
-  return NextResponse.json(spec, { headers: { "Cache-Control": "public, max-age=3600" } });
+  return NextResponse.json(spec, { headers: { "Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff" } });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProjects } from "@/lib/data";
+import { logger } from "@/lib/logger";
 
 const SAFE_PARAM = /^[A-Za-z0-9._-]+$/;
 
@@ -37,13 +38,20 @@ export async function GET(
   const id = reqId(request);
   const ip = request.headers.get("x-real-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (isRateLimited(ip)) {
+    logger.warn("score rate limited", { requestId: id });
     return err(429, "rate limited", "RATE_LIMITED", id, { "Retry-After": "60" });
   }
   const { owner, repo } = await params;
   if (!SAFE_PARAM.test(owner) || !SAFE_PARAM.test(repo)) {
     return err(400, "invalid owner or repo", "INVALID_PARAM", id);
   }
-  const data = getProjects();
+  let data;
+  try {
+    data = getProjects();
+  } catch (e) {
+    logger.error("score data load failed", { requestId: id, message: e instanceof Error ? e.message : String(e) });
+    return err(500, "internal error", "INTERNAL", id);
+  }
   const ownerLower = owner.toLowerCase();
   const repoLower = repo.toLowerCase();
   const project = data.projects.find(

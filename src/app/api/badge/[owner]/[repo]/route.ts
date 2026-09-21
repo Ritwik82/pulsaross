@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProjects } from "@/lib/data";
+import { logger } from "@/lib/logger";
 
 const SAFE_PARAM = /^[A-Za-z0-9._-]+$/;
 
@@ -66,6 +67,7 @@ export async function GET(
 ) {
   const ip = request.headers.get("x-real-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (isRateLimited(ip)) {
+    logger.warn("badge rate limited", {});
     const svg = renderBadgeSvg("pulsaross", "rate limited", "#6b7280");
     return new NextResponse(svg, {
       status: 429,
@@ -90,7 +92,25 @@ export async function GET(
     });
   }
 
-  const data = getProjects();
+  const data = (() => {
+    try {
+      return getProjects();
+    } catch (e) {
+      logger.error("badge data load failed", { message: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  })();
+  if (!data) {
+    const svg = renderBadgeSvg("pulsaross", "error", "#6b7280");
+    return new NextResponse(svg, {
+      status: 500,
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=60",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  }
   const ownerLower = owner.toLowerCase();
   const repoLower = repo.toLowerCase();
   const project = data.projects.find(
