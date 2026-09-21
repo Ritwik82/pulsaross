@@ -32,18 +32,18 @@ test("theme picker switches theme and persists across reload", async ({ page }) 
   const trigger = page.getByRole("button", { name: "Change theme" });
   await trigger.click();
   await page.getByRole("button", { name: "LIGHT", exact: true }).click();
-  await page.getByRole("menuitemradio", { name: /Cream/ }).click();
+  await page.getByRole("menuitemradio", { name: /Latte/ }).click();
 
   const theme = await page.evaluate(() => ({
     theme: document.documentElement.dataset.theme,
     meta: document.querySelector('meta[name="theme-color"]')?.getAttribute("content"),
   }));
-  expect(theme.theme).toBe("cream");
-  expect(theme.meta).toBe("#f6eddd");
+  expect(theme.theme).toBe("latte");
+  expect(theme.meta).toBe("#e6d9bf");
 
   await page.reload({ waitUntil: "networkidle" });
   const persisted = await page.evaluate(() => document.documentElement.dataset.theme);
-  expect(persisted).toBe("cream");
+  expect(persisted).toBe("latte");
 });
 
 test("theme picker switches to Mint and Mint Dark with correct background", async ({ page }) => {
@@ -62,8 +62,8 @@ test("theme picker switches to Mint and Mint Dark with correct background", asyn
     bg: getComputedStyle(document.body).backgroundColor,
   }));
   expect(themeData.theme).toBe("mint");
-  expect(themeData.meta).toBe("#fcfcfc");
-  expect(themeData.bg).toBe("rgb(252, 252, 252)");
+  expect(themeData.meta).toBe("#e3f2e9");
+  expect(themeData.bg).toBe("rgb(227, 242, 233)");
 
   // Switch to Mint Dark
   await trigger.click();

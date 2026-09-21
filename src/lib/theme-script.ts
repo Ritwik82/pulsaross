@@ -3,8 +3,8 @@
 // The script runs pre-paint: no flash of the wrong theme, and the meta tag must
 // match the persisted theme, not OS preference (AGENTS.md known pattern).
 
-export const DARK_THEMES = ["espresso", "caramel", "terminal", "midnight", "mint-dark"] as const;
-export const LIGHT_THEMES = ["latte", "cream", "blush", "azure", "mint"] as const;
+export const DARK_THEMES = ["espresso", "terminal", "mint-dark"] as const;
+export const LIGHT_THEMES = ["latte", "blush", "azure", "mint"] as const;
 
 export const THEMES = [...DARK_THEMES, ...LIGHT_THEMES] as const;
 
@@ -18,14 +18,11 @@ export function isDarkTheme(value: string | null | undefined): value is ThemeNam
 // script and the theme picker can never drift apart.
 export const THEME_META_COLORS: Record<ThemeName, string> = {
   espresso: "#1a1410",
-  caramel: "#3a2a1a",
   terminal: "#0a0e13",
-  midnight: "#12161d",
   latte: "#e6d9bf",
-  cream: "#f6eddd",
   blush: "#f2dfda",
   azure: "#d9e6f2",
-  mint: "#fcfcfc",
+  mint: "#e3f2e9",
   "mint-dark": "#121212",
 };
 
@@ -42,9 +39,11 @@ export function isThemeName(value: string | null | undefined): value is ThemeNam
  */
 export const themeScript = `
 (function() {
-  var THEMES = ["espresso", "caramel", "terminal", "midnight", "mint-dark", "latte", "cream", "blush", "azure", "mint"];
-  var META = { espresso: "#1a1410", caramel: "#3a2a1a", terminal: "#0a0e13", midnight: "#12161d", "mint-dark": "#121212", latte: "#e6d9bf", cream: "#f6eddd", blush: "#f2dfda", azure: "#d9e6f2", mint: "#fcfcfc" };
+  var THEMES = ["espresso", "terminal", "mint-dark", "latte", "blush", "azure", "mint"];
+  var META = { espresso: "#1a1410", terminal: "#0a0e13", "mint-dark": "#121212", latte: "#e6d9bf", blush: "#f2dfda", azure: "#d9e6f2", mint: "#e3f2e9" };
   var t = localStorage.getItem('pulsaross-theme');
+  if (t === "cream") t = "mint";
+  if (t === "caramel") t = "mint-dark";
   if (THEMES.indexOf(t) === -1) t = "terminal";
   document.documentElement.dataset.theme = t;
   var meta = document.querySelector('meta[name="theme-color"]');

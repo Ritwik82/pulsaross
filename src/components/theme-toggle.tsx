@@ -12,11 +12,8 @@ import {
 
 const THEME_LABELS: Record<ThemeName, string> = {
   espresso: "Espresso",
-  caramel: "Caramel",
   terminal: "Terminal",
-  midnight: "Midnight",
   latte: "Latte",
-  cream: "Cream",
   blush: "Blush",
   azure: "Azure",
   mint: "Mint",
@@ -26,11 +23,8 @@ const THEME_LABELS: Record<ThemeName, string> = {
 // Swatch colors mirror each theme's accent token in globals.css.
 const THEME_SWATCHES: Record<ThemeName, string> = {
   espresso: "#d9a05b",
-  caramel: "#e8a33d",
   terminal: "#2cc9ee",
-  midnight: "#86aee8",
   latte: "#8b4d15",
-  cream: "#8f501f",
   blush: "#a6534f",
   azure: "#2a5f9e",
   mint: "#006239",
@@ -138,10 +132,11 @@ export function ThemeToggle() {
         <div
           role="menu"
           aria-label="Theme"
-          className="absolute right-0 top-full mt-1 z-[70] glass border py-1 w-40"
+          className="absolute right-0 top-full mt-1 z-[70] border py-1 w-40"
           style={{
             boxShadow: "var(--card-shadow)",
             borderColor: "var(--color-border)",
+            backgroundColor: "var(--color-surface-elevated)",
           }}
         >
           <div
