@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { computeAbandonmentRisk, computeCompositeScore, daysSince, normalizeContributorCount, scoreIssueHealth, scoreMomentum, scoreRecency } from "./scoring.mjs";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 if (!GITHUB_TOKEN) {
@@ -13,10 +14,9 @@ const ONLY_WATCHLIST = process.argv.includes("--watchlist-only");
 const UA = "pulsaross/1.1";
 const FRESH_FIND_MAX_AGE_DAYS = 274; // ~9 months
 
-// Existing 5 signals scaled to 0.80, abandonment_risk = new 0.20 weight.
-// In score_breakdown, abandonment_risk stores the GUARD (1 − raw risk) so all six
-// signals contribute positively to the composite; raw risk lives at p.abandonment_risk.
-const SCORE_WEIGHTS = { recency: 0.24, momentum: 0.20, issue_health: 0.16, license: 0.08, contributors: 0.12, abandonment_risk: 0.20 };
+// Scoring math lives in ./scoring.mjs (single source of truth, test-locked by
+// tests/scoring.spec.mjs). Weights: recency 0.24, momentum 0.20, issue_health
+// 0.16, license 0.08, contributors 0.12, abandonment_risk 0.20.
 
 const blocklistPath = join(process.cwd(), "blocklist.json");
 const BLOCKED_REPOS = new Set(JSON.parse(readFileSync(blocklistPath, "utf-8")));
@@ -81,10 +81,6 @@ async function fetchWithUA(url, retries = 5) {
   return r.text;
 }
 
-function daysSince(iso) {
-  return (Date.now() - new Date(iso).getTime()) / 86_400_000;
-}
-
 // Compare versions tolerant of format noise: "v13.6.0" == "13.6.0", "2.1.4-beta" vs "2.1.4",
 // and "1.0" == "1.0.0" (trailing zero segments normalized away).
 function versionKey(v) {
@@ -97,47 +93,11 @@ function sameVersion(a, b) {
   return versionKey(a) === versionKey(b) && versionKey(a) !== "";
 }
 
-function clamp(v, min = 0, max = 1) {
-  return Math.max(min, Math.min(max, v));
-}
-
-function scoreRecency(pushedAt) {
-  const days = daysSince(pushedAt);
-  return clamp(1 - days / 90);
-}
-
-// Absolute reference curve, not run-relative: 10 stars/day sustained is full
-// marks. A 100-star 50-day repo scores log10(101)/log10(501) ≈ 0.77, a
-// 10-star 50-day repo log10(11)/log10(501) ≈ 0.40 — young repos discriminate.
-function scoreMomentum(stars, createdAt) {
-  const age = Math.max(daysSince(createdAt), 1);
-  return clamp(Math.log10(1 + stars) / Math.log10(1 + 10 * age));
-}
-
-// Proxy: open_issues_count includes open PRs, so subtract them — otherwise a
-// PR-active repo reads as issue-burdened (8 issues + 5 PRs = 13 → 0.6 instead
-// of 0.8). PR count comes from one search call (total_count), no pagination.
-function scoreIssueHealth(openIssues, openPRs) {
-  const issues = Math.max(0, openIssues - openPRs);
-  if (issues === 0) return 1.0;
-  if (issues < 10) return 0.8;
-  if (issues < 50) return 0.6;
-  if (issues < 100) return 0.4;
-  return 0.2;
-}
-
 async function scoreContributors(owner, repo) {
   const r = await retryFetch(`https://api.github.com/repos/${owner}/${repo}/contributors?per_page=1&anon=false`, { format: "text" });
   const match = r.link?.match(/page=(\d+)>;\s*rel="last"/);
   const count = match ? parseInt(match[1], 10) : (JSON.parse(r.text))?.length ?? 0;
-  return { normalized: clamp(Math.min(count, 20) / 20), raw: count };
-}
-
-function computeAbandonmentRisk(pushedAt) {
-  const days = daysSince(pushedAt);
-  if (days < 14) return 0;
-  if (days < 90) return (days - 14) / 76;
-  return 1;
+  return { normalized: normalizeContributorCount(count), raw: count };
 }
 
 async function findDiscussions(owner, repo) {
@@ -391,12 +351,7 @@ async function main() {
   }
 
   for (const p of freshProjects) {
-    const breakdown = p.score_breakdown;
-    p.score = parseFloat(
-      Object.entries(SCORE_WEIGHTS)
-        .reduce((sum, [k, w]) => sum + (breakdown[k] ?? 0) * w, 0)
-        .toFixed(3)
-    );
+    p.score = computeCompositeScore(p.score_breakdown);
   }
 
   // Same repo can ship multiple F-Droid packages — keep the highest-scoring entry.
