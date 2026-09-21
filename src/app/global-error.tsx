@@ -1,5 +1,10 @@
 "use client";
+import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    logger.error("unhandled app error", { digest: error.digest ?? null, message: error.message });
+  }, [error]);
   return (
     <html lang="en">
       <body className="min-h-screen flex items-center justify-center p-6" style={{ background: "var(--color-bg)", color: "var(--color-text)" }}>
