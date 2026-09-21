@@ -3,6 +3,27 @@ import { getProjects } from "@/lib/data";
 
 const SAFE_PARAM = /^[A-Za-z0-9._-]+$/;
 
+// ponytail: same per-instance token bucket as /api/score. Resets on deploy. Upgrade to KV/Redis if abuse observed.
+const buckets = new Map<string, { count: number; reset: number }>();
+const WINDOW_MS = 60_000;
+const MAX_REQ = 30;
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  if (buckets.size > 500) {
+    for (const [key, val] of buckets) {
+      if (now > val.reset) buckets.delete(key);
+    }
+  }
+  const b = buckets.get(ip);
+  if (!b || now > b.reset) {
+    buckets.set(ip, { count: 1, reset: now + WINDOW_MS });
+    return false;
+  }
+  if (b.count >= MAX_REQ) return true;
+  b.count++;
+  return false;
+}
+
 function badgeColor(score: number): string {
   const s = score * 10;
   if (s >= 8) return "#059669";
@@ -12,8 +33,9 @@ function badgeColor(score: number): string {
 }
 
 function renderBadgeSvg(label: string, value: string, color: string): string {
-  const leftWidth = 66;
-  const rightWidth = 52;
+  // ponytail: ~6px/char at 11px Verdana + padding. Keeps "pulsaross" at 66 and "10.0/10" at 52, grows for "not found".
+  const leftWidth = label.length * 6 + 12;
+  const rightWidth = value.length * 6 + 10;
   const totalWidth = leftWidth + rightWidth;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
@@ -42,12 +64,29 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ owner: string; repo: string }> }
 ) {
+  const ip = request.headers.get("x-real-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (isRateLimited(ip)) {
+    const svg = renderBadgeSvg("pulsaross", "rate limited", "#6b7280");
+    return new NextResponse(svg, {
+      status: 429,
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=60",
+        "X-Content-Type-Options": "nosniff",
+        "Retry-After": "60",
+      },
+    });
+  }
   const { owner, repo } = await params;
   if (!SAFE_PARAM.test(owner) || !SAFE_PARAM.test(repo)) {
     const svg = renderBadgeSvg("pulsaross", "invalid", "#6b7280");
     return new NextResponse(svg, {
       status: 400,
-      headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=300" },
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+      },
     });
   }
 
@@ -62,7 +101,11 @@ export async function GET(
     const svg = renderBadgeSvg("pulsaross", "not found", "#6b7280");
     return new NextResponse(svg, {
       status: 404,
-      headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=300" },
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+      },
     });
   }
 
@@ -72,7 +115,14 @@ export async function GET(
   const etag = `"${project.score.toString(36)}-${(project.last_release_at ?? project.created_at).replace(/[^0-9]/g, "")}"`;
 
   if (request.headers.get("if-none-match") === etag) {
-    return new NextResponse(null, { status: 304, headers: { ETag: etag, "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400" } });
+    return new NextResponse(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
   }
 
   return new NextResponse(svg, {
@@ -80,6 +130,7 @@ export async function GET(
     headers: {
       "Content-Type": "image/svg+xml",
       "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      "X-Content-Type-Options": "nosniff",
       ETag: etag,
     },
   });
