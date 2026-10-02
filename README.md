@@ -71,7 +71,7 @@ npm run dev
 # → http://localhost:3000
 ```
 
-Data refresh (every 6h via GitHub Action):
+Data refresh (every 12h via GitHub Action):
 
 ```bash
 GITHUB_TOKEN=your_token node scripts/refresh-data.mjs
