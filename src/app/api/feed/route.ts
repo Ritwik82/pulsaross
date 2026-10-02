@@ -44,7 +44,9 @@ export async function GET(request: Request) {
       status: 429,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=60",
+        // no-store, never public: a shared cache would replay this 429 to
+        // every visitor for 60s, not just the throttled IP.
+        "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
         "Retry-After": "60",
       },
@@ -57,7 +59,8 @@ export async function GET(request: Request) {
       status: 400,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
+        // Deterministic rejection, trivial to recompute — caching buys nothing.
+        "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });
@@ -71,7 +74,8 @@ export async function GET(request: Request) {
       status: 500,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=60",
+        // no-store: caching a 500 would spread one incident to every visitor.
+        "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });

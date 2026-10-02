@@ -8,6 +8,25 @@
 // In score_breakdown, abandonment_risk stores the GUARD (1 − raw risk) so all
 // six signals contribute positively to the composite.
 
+// Assemble a score_breakdown from raw signal inputs and the composite it
+// yields. The guard inversion lives here, not at the call site, so the
+// highest-weight signal in the model (abandonment_risk, 0.20) is covered by
+// the test suite instead of being a one-token typo away from inverting every
+// dead repo's score. `raw` is the risk curve's output; the guard is stored.
+export function buildScoreBreakdown(signals) {
+  const s = signals ?? {};
+  const abandonmentRisk = computeAbandonmentRisk(s.pushed_at);
+  const breakdown = {
+    recency: scoreRecency(s.pushed_at),
+    momentum: scoreMomentum(s.stars, s.created_at),
+    issue_health: scoreIssueHealth(s.open_issues_count, s.open_prs),
+    license: s.license ?? 0,
+    contributors: normalizeContributorCount(s.contributor_count),
+    abandonment_risk: 1 - abandonmentRisk,
+  };
+  return { breakdown, score: computeCompositeScore(breakdown) };
+}
+
 export const SCORE_WEIGHTS = { recency: 0.24, momentum: 0.20, issue_health: 0.16, license: 0.08, contributors: 0.12, abandonment_risk: 0.20 };
 
 function clamp(v, min = 0, max = 1) {

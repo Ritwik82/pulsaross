@@ -1,6 +1,6 @@
-import { writeFileSync, mkdirSync, readFileSync, existsSync, statSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync, statSync, renameSync, unlinkSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { computeAbandonmentRisk, computeCompositeScore, daysSince, normalizeContributorCount, scoreIssueHealth, scoreMomentum, scoreRecency } from "./scoring.mjs";
+import { buildScoreBreakdown, computeAbandonmentRisk, computeCompositeScore, daysSince, normalizeContributorCount } from "./scoring.mjs";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 if (!GITHUB_TOKEN) {
@@ -17,6 +17,25 @@ const FRESH_FIND_MAX_AGE_DAYS = 274; // ~9 months
 // Scoring math lives in ./scoring.mjs (single source of truth, test-locked by
 // tests/scoring.spec.mjs). Weights: recency 0.24, momentum 0.20, issue_health
 // 0.16, license 0.08, contributors 0.12, abandonment_risk 0.20.
+
+// Atomic write: writeFileSync truncates its target in place, so a run killed
+// mid-write (12h cron, no timeout) leaves truncated JSON behind. The API
+// routes JSON.parse these files on every cold request, so a half-written
+// projects.json turns a cron hiccup into a site-wide 500. Write to a sibling
+// temp file and rename: rename is atomic within a filesystem, so a reader
+// sees either the old file or the new one, never a partial one.
+function writeFileAtomic(path, contents) {
+  const tmpPath = `${path}.tmp`;
+  try {
+    writeFileSync(tmpPath, contents);
+    renameSync(tmpPath, path);
+  } catch (e) {
+    try {
+      if (existsSync(tmpPath)) unlinkSync(tmpPath);
+    } catch {}
+    throw e;
+  }
+}
 
 const blocklistPath = join(process.cwd(), "blocklist.json");
 const BLOCKED_REPOS = new Set(JSON.parse(readFileSync(blocklistPath, "utf-8")));
@@ -207,7 +226,7 @@ async function main() {
         app.staleness = "unknown";
       }
     }
-    writeFileSync(join(process.cwd(), "data", "watchlist.json"), JSON.stringify(watchlist, null, 2));
+    writeFileAtomic(join(process.cwd(), "data", "watchlist.json"), JSON.stringify(watchlist, null, 2));
     console.log(`Wrote ${watchlist.apps.length} watchlist apps to data/watchlist.json`);
   }
 
@@ -231,7 +250,7 @@ async function main() {
     } else {
       fdroidRaw = await fetchWithUA("https://f-droid.org/repo/index-v2.json");
       mkdirSync(dirname(fdroidCachePath), { recursive: true });
-      writeFileSync(fdroidCachePath, fdroidRaw);
+      writeFileAtomic(fdroidCachePath, fdroidRaw);
       console.log(`  downloaded + cached ${(fdroidRaw.length / 1024 / 1024).toFixed(1)} MB index`);
     }
   } catch (e) {
@@ -295,8 +314,6 @@ async function main() {
     const openPRs = await fetchJSON(
       `https://api.github.com/search/issues?q=repo:${owner}/${name}+type:pr+state:open&per_page=1`
     ).then((r) => r?.total_count ?? 0).catch(() => 0);
-    const issueScore = scoreIssueHealth(repoData.open_issues_count ?? 0, openPRs);
-    const abandonmentRisk = computeAbandonmentRisk(repoData.pushed_at);
     const last_release_at = await fetchJSON(`https://api.github.com/repos/${owner}/${name}/releases?per_page=1`)
       .then((rs) => rs?.[0]?.published_at ?? null)
       .catch(() => null);
@@ -306,9 +323,17 @@ async function main() {
       ? await findDiscussions(owner, name)
       : { social_mentions: 0, links: [] };
 
-    const recency = scoreRecency(repoData.pushed_at);
-    const momentum = scoreMomentum(repoData.stargazers_count, repoData.created_at);
-    const license = repoData.license?.spdx_id ? 1 : 0;
+    // Breakdown + composite both come from scoring.mjs so the guard inversion
+    // on the 0.20-weight signal is test-locked (see buildScoreBreakdown).
+    const { breakdown } = buildScoreBreakdown({
+      pushed_at: repoData.pushed_at,
+      stars: repoData.stargazers_count,
+      created_at: repoData.created_at,
+      open_issues_count: repoData.open_issues_count,
+      open_prs: openPRs,
+      license: repoData.license?.spdx_id ? 1 : 0,
+      contributor_count: contribResult.raw,
+    });
 
     return {
       id: `${owner}/${name}`,
@@ -322,13 +347,14 @@ async function main() {
       added_at: app.addedAt ?? null,
       license_name: repoData.license?.spdx_id ?? null,
       contributor_count: contribResult.raw,
-      score_breakdown: { recency, momentum, issue_health: issueScore, license, contributors: contribResult.normalized, abandonment_risk: 1 - abandonmentRisk },
+      score_breakdown: breakdown,
       discussion_links: social.links,
       genre: genreId,
       genre_label: genreLabel,
       shizuku: isShizuku,
       is_generic: isGeneric,
-      abandonment_risk: abandonmentRisk,
+      // Raw risk curve, retained alongside the guard stored in the breakdown.
+      abandonment_risk: computeAbandonmentRisk(repoData.pushed_at),
       last_release_at,
       social_mentions: social.social_mentions,
       target_sdk: app.targetSdk ?? null,
@@ -350,6 +376,8 @@ async function main() {
     await new Promise((r) => setTimeout(r, 300));
   }
 
+  // Composite is derived from the stored breakdown, so it cannot drift from
+  // the signals the breakdown reports.
   for (const p of freshProjects) {
     p.score = computeCompositeScore(p.score_breakdown);
   }
@@ -385,7 +413,7 @@ async function main() {
 
   const dataDir = join(process.cwd(), "data");
   mkdirSync(dataDir, { recursive: true });
-  writeFileSync(join(dataDir, "projects.json"), JSON.stringify({ generated_at: new Date().toISOString(), fresh_cutoff: launchCutoffIso, projects: freshProjects }, null, 2));
+  writeFileAtomic(join(dataDir, "projects.json"), JSON.stringify({ generated_at: new Date().toISOString(), fresh_cutoff: launchCutoffIso, projects: freshProjects }, null, 2));
   console.log(`\nWrote ${freshProjects.length} fresh projects to data/projects.json`);
 }
 

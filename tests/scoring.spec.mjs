@@ -7,6 +7,7 @@ import {
   normalizeContributorCount,
   computeAbandonmentRisk,
   computeCompositeScore,
+  buildScoreBreakdown,
 } from "../scripts/scoring.mjs";
 
 const DAY_MS = 86_400_000;
@@ -134,4 +135,127 @@ test("composite: NaN inputs sanitize to 0 instead of poisoning the score", async
   });
   expect(Number.isFinite(v)).toBe(true);
   expect(v).toBe(0);
+});
+
+// ─── buildScoreBreakdown: the guard inversion ───────────────────────────────
+// The breakdown stores the GUARD (1 - raw risk) so every signal contributes
+// positively. abandonment_risk carries the largest weight in the model (0.20),
+// so inverting it by mistake would add 0.20 to every abandoned repo instead
+// of subtracting it — a 20-point swing that silently ranks dead projects up.
+// These tests exist to make that inversion impossible to break unnoticed.
+
+test("breakdown: dead repo stores the GUARD, not raw risk (0.20 swing locked)", async () => {
+  const { breakdown } = buildScoreBreakdown({
+    pushed_at: daysAgo(400),
+    stars: 500,
+    created_at: daysAgo(500),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 1,
+    contributor_count: 20,
+  });
+  // Raw risk is 1 (fully abandoned) => guard must be 0.
+  expect(computeAbandonmentRisk(daysAgo(400))).toBe(1);
+  expect(breakdown.abandonment_risk).toBe(0);
+});
+
+test("breakdown: healthy repo stores a full guard (1 - 0 risk)", async () => {
+  const { breakdown } = buildScoreBreakdown({
+    pushed_at: daysAgo(1),
+    stars: 500,
+    created_at: daysAgo(500),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 1,
+    contributor_count: 20,
+  });
+  expect(computeAbandonmentRisk(daysAgo(1))).toBe(0);
+  expect(breakdown.abandonment_risk).toBe(1);
+});
+
+test("breakdown: an abandoned repo must score LOWER than an active one", async () => {
+  const active = buildScoreBreakdown({
+    pushed_at: daysAgo(2),
+    stars: 500,
+    created_at: daysAgo(500),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 1,
+    contributor_count: 20,
+  });
+  const abandoned = buildScoreBreakdown({
+    pushed_at: daysAgo(400),
+    stars: 500,
+    created_at: daysAgo(500),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 1,
+    contributor_count: 20,
+  });
+  expect(abandoned.score).toBeLessThan(active.score);
+});
+
+test("breakdown: score always equals the composite of its own breakdown", async () => {
+  const { breakdown, score } = buildScoreBreakdown({
+    pushed_at: daysAgo(45),
+    stars: 100,
+    created_at: daysAgo(200),
+    open_issues_count: 8,
+    open_prs: 5,
+    license: 1,
+    contributor_count: 6,
+  });
+  expect(score).toBe(computeCompositeScore(breakdown));
+});
+
+test("breakdown: all six keys present, matching the weight table", async () => {
+  const { breakdown } = buildScoreBreakdown({
+    pushed_at: daysAgo(10),
+    stars: 10,
+    created_at: daysAgo(100),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 0,
+    contributor_count: 0,
+  });
+  expect(Object.keys(breakdown).sort()).toEqual(Object.keys(SCORE_WEIGHTS).sort());
+});
+
+test("breakdown: every signal stays in [0,1] so no key can exceed full marks", async () => {
+  const { breakdown } = buildScoreBreakdown({
+    pushed_at: daysAgo(0),
+    stars: 1_000_000,
+    created_at: daysAgo(0),
+    open_issues_count: 0,
+    open_prs: 0,
+    license: 1,
+    contributor_count: 5_000,
+  });
+  for (const [k, v] of Object.entries(breakdown)) {
+    expect(v, `${k} out of range`).toBeGreaterThanOrEqual(0);
+    expect(v, `${k} out of range`).toBeLessThanOrEqual(1);
+  }
+});
+
+test("breakdown: fully dead repo with no metadata still scores finite, never NaN", async () => {
+  const { breakdown, score } = buildScoreBreakdown({});
+  expect(Number.isFinite(score)).toBe(true);
+  expect(score).toBeGreaterThanOrEqual(0);
+  expect(breakdown.abandonment_risk).toBe(0);
+});
+
+test("breakdown: PR subtraction and contributor cap survive the assembly path", async () => {
+  const { breakdown } = buildScoreBreakdown({
+    pushed_at: daysAgo(5),
+    stars: 10,
+    created_at: daysAgo(50),
+    open_issues_count: 8,
+    open_prs: 5,
+    license: 1,
+    contributor_count: 50,
+  });
+  // 8 issues - 5 PRs = 3 => 0.8 bucket
+  expect(breakdown.issue_health).toBe(0.8);
+  // 50 contributors caps at 20 => 1.0
+  expect(breakdown.contributors).toBe(1);
 });
