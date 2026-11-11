@@ -1,0 +1,16 @@
+{
+    "hooks":  {
+                  "Stop":  [
+                               {
+                                   "hooks":  [
+                                                 {
+                                                     "commandWindows":  "powershell -NoProfile -ExecutionPolicy Bypass -File .cursor/hooks/stop-check.ps1 -Mode codex",
+                                                     "command":  "pwsh -NoProfile -File .cursor/hooks/stop-check.ps1 -Mode codex",
+                                                     "timeout":  300,
+                                                     "type":  "command"
+                                                 }
+                                             ]
+                               }
+                           ]
+              }
+}
